@@ -512,7 +512,7 @@
     }
 
     .drawn-card.animating {
-      animation: drawCard 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      animation: drawCard 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
       transform-origin: left center;
     }
 
@@ -1572,7 +1572,7 @@
 
         if (this.currentDisplayedCard?.type === "noun" && this.memoryCardCount < this.roundSequence.length) {
           this.memoryCardCount += 1;
-          await this.ui.animateDisplayedCardToMemory(this.roundSequence, this.memoryCardCount);
+          this.ui.animateDisplayedCardToMemory(this.roundSequence, this.memoryCardCount);
         }
 
         this.ui.displayDrawnCard(this.currentCard);
