@@ -348,6 +348,17 @@
       font-size: 17px;
     }
 
+    .message-zone {
+      position: absolute;
+      top: 122px;
+      left: 50%;
+      z-index: 4;
+      width: min(460px, 72vw);
+      min-height: 48px;
+      pointer-events: none;
+      transform: translateX(-50%);
+    }
+
     .game-area {
       margin: 0;
       padding: 8px 16px;
@@ -688,21 +699,18 @@
     }
 
     .game-message {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      z-index: 1001;
-      max-width: 80%;
-      padding: 24px 40px;
-      border: 2px solid var(--primary);
+      width: 100%;
+      padding: 12px 18px;
+      border: 1px solid rgba(80, 211, 223, 0.38);
       border-radius: 8px;
-      background: white;
-      box-shadow: var(--shadow);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 14px 32px rgba(0, 72, 112, 0.16);
       color: var(--text);
-      font-size: 19px;
+      font-size: 16px;
+      font-weight: 700;
       text-align: center;
-      transform: translate(-50%, -50%);
       animation: fadeInOut 3s ease-in-out forwards;
+      backdrop-filter: blur(8px);
     }
 
     .game-message.success {
@@ -848,6 +856,11 @@
         top: 18px;
       }
 
+      .message-zone {
+        top: 116px;
+        width: min(420px, 86vw);
+      }
+
       .memory-strip {
         justify-content: center;
         padding-right: 0;
@@ -904,6 +917,7 @@
         <button class="legend-btn" title="Show legend" aria-label="Show legend">Legend</button>
         <button class="reveal-btn">Review</button>
       </div>
+      <div class="message-zone" aria-live="polite"></div>
 
       <div class="legend-overlay" aria-hidden="true">
         <img id="legendImage" src="" alt="Game Legend" class="legend-image">
@@ -1090,12 +1104,16 @@
     class MessageManager {
       showMessage(text, type = "success", persistent = false) {
         document.querySelectorAll(".game-message.persistent").forEach((message) => message.remove());
+        if (!persistent) {
+          document.querySelectorAll(".message-zone .game-message").forEach((message) => message.remove());
+        }
 
         const message = document.createElement("div");
         message.className = `game-message ${type}${persistent ? " persistent" : ""}`;
         message.textContent = text;
 
-        document.querySelector(".game-board").appendChild(message);
+        const messageZone = document.querySelector(".message-zone");
+        (messageZone || document.querySelector(".game-board")).appendChild(message);
 
         if (!persistent) {
           setTimeout(() => {
