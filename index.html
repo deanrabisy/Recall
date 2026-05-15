@@ -1001,8 +1001,82 @@
       "2nd chance - 4.png", "2nd chance - 5.png", "2nd chance - 6.png"
     ];
 
-    const deckBack = asset("deck back.png");
-    const legendImage = asset("legendl.png");
+    let deckBack = asset("deck back.png");
+    let legendImage = asset("legendl.png");
+
+    const frameTintCache = new Map();
+
+    function isBrownFramePixel(r, g, b, x, y, width, height) {
+      const nearFrame = x < width * 0.18 || x > width * 0.82 || y < height * 0.18 || y > height * 0.82;
+      const brownHue = r > 70 && g > 36 && g < 175 && b < 135 && r > b * 1.18 && g > b * 0.72 && r >= g * 0.86;
+      return nearFrame && brownHue;
+    }
+
+    function tintFramePixel(r, g, b) {
+      const warmth = Math.max(0, Math.min(1, (r + g * 0.7 - b * 0.4) / 310));
+      const shadow = Math.max(0, Math.min(1, (95 - (r + g + b) / 3) / 95));
+      const highlight = Math.max(0, Math.min(1, ((r + g + b) / 3 - 145) / 110));
+      const base = [35, 135, 159];
+      const teal = [22, 183, 167];
+      const light = [80, 211, 223];
+      const dark = [0, 72, 112];
+      const mix = base.map((value, index) => value * (1 - warmth) + teal[index] * warmth);
+      const lit = mix.map((value, index) => value * (1 - highlight * 0.55) + light[index] * highlight * 0.55);
+      return lit.map((value, index) => Math.round(value * (1 - shadow * 0.55) + dark[index] * shadow * 0.55));
+    }
+
+    function recolorCardFrame(url) {
+      if (frameTintCache.has(url)) {
+        return frameTintCache.get(url);
+      }
+
+      const job = new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            ctx.drawImage(img, 0, 0);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            for (let y = 0; y < canvas.height; y += 1) {
+              for (let x = 0; x < canvas.width; x += 1) {
+                const index = (y * canvas.width + x) * 4;
+                if (data[index + 3] > 0 && isBrownFramePixel(data[index], data[index + 1], data[index + 2], x, y, canvas.width, canvas.height)) {
+                  const [r, g, b] = tintFramePixel(data[index], data[index + 1], data[index + 2]);
+                  data[index] = r;
+                  data[index + 1] = g;
+                  data[index + 2] = b;
+                }
+              }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+            resolve(canvas.toDataURL("image/png"));
+          } catch (error) {
+            resolve(url);
+          }
+        };
+        img.onerror = () => resolve(url);
+        img.src = url;
+      });
+
+      frameTintCache.set(url, job);
+      return job;
+    }
+
+    async function prepareCardFrameColors() {
+      const cardFiles = ["deck back.png", ...nounFiles, ...chanceFiles];
+      await Promise.all(cardFiles.map(async (filename) => {
+        IMAGE_URLS[filename] = await recolorCardFrame(IMAGE_URLS[filename]);
+      }));
+      deckBack = asset("deck back.png");
+      legendImage = asset("legendl.png");
+    }
 
     class Card {
       constructor(type, imagePath, value) {
@@ -1785,7 +1859,8 @@
       }
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
+    window.addEventListener("DOMContentLoaded", async () => {
+      await prepareCardFrameColors();
       window.recallGame = new Game();
     });
   </script>
