@@ -225,15 +225,16 @@
       width: 12px;
       height: 12px;
       border-radius: 50%;
-      background: var(--chance);
-      box-shadow: 0 0 0 rgba(228, 224, 154, 0);
+      background: var(--cyan);
+      box-shadow: 0 0 0 rgba(80, 211, 223, 0);
       opacity: 0.36;
     }
 
     .second-chance-icon.active {
       opacity: 1;
       animation: chanceIndicatorPulse 2.4s ease-in-out infinite;
-      box-shadow: 0 0 12px rgba(228, 224, 154, 0.82);
+      background: linear-gradient(135deg, #50d3df, #16b7a7);
+      box-shadow: 0 0 12px rgba(80, 211, 223, 0.82);
     }
 
     .second-chance-icon.receiving {
@@ -243,13 +244,14 @@
     @keyframes chanceIndicatorPulse {
       0%, 100% {
         transform: scale(1);
-        box-shadow: 0 0 9px rgba(228, 224, 154, 0.7);
+        box-shadow: 0 0 9px rgba(80, 211, 223, 0.72);
       }
       50% {
         transform: scale(1.28);
         box-shadow:
-          0 0 0 5px rgba(228, 224, 154, 0.2),
-          0 0 18px rgba(80, 211, 223, 0.55);
+          0 0 0 5px rgba(22, 183, 167, 0.2),
+          0 0 18px rgba(80, 211, 223, 0.68),
+          0 0 26px rgba(0, 72, 112, 0.22);
       }
     }
 
@@ -573,7 +575,7 @@
     }
 
     .player-card.receiving-chance .second-chance-icons {
-      filter: drop-shadow(0 0 14px rgba(228, 224, 154, 0.5));
+      filter: drop-shadow(0 0 14px rgba(80, 211, 223, 0.58));
     }
 
     @keyframes drawCard {
@@ -1610,6 +1612,7 @@
         this.currentDisplayedCard = null;
         this.memoryCardCount = 0;
         this.isDrawing = false;
+        this.turnAdvanceTimer = null;
         this.roundActive = true;
         this.secondChanceUsed = false;
         this.deckElement = document.querySelector(".deck");
@@ -1712,12 +1715,15 @@
           setTimeout(() => {
             this.assignSecondChanceCard();
           }, 260);
+          this.isDrawing = false;
         } else {
-          this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-          this.ui.updatePlayerDisplay(this.players, this.currentPlayerIndex);
+          window.clearTimeout(this.turnAdvanceTimer);
+          this.turnAdvanceTimer = window.setTimeout(() => {
+            this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+            this.ui.updatePlayerDisplay(this.players, this.currentPlayerIndex);
+            this.isDrawing = false;
+          }, 2500);
         }
-
-        this.isDrawing = false;
       }
 
       async assignSecondChanceCard() {
@@ -1734,6 +1740,8 @@
       }
 
       endRound() {
+        window.clearTimeout(this.turnAdvanceTimer);
+        this.turnAdvanceTimer = null;
         document.querySelectorAll(".game-message.persistent").forEach((message) => message.remove());
 
         this.playedCards = [];
