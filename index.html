@@ -798,6 +798,131 @@
       color: white;
     }
 
+    .setup-overlay,
+    .countdown-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(239, 248, 215, 0.6);
+      backdrop-filter: blur(8px);
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 0.28s ease;
+    }
+
+    .setup-overlay.hidden,
+    .countdown-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .setup-panel {
+      width: min(460px, 92vw);
+      padding: 28px;
+      border: 1px solid rgba(35, 135, 159, 0.22);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+      text-align: left;
+    }
+
+    .setup-panel img {
+      display: block;
+      width: 132px;
+      height: auto;
+      margin-bottom: 22px;
+    }
+
+    .setup-panel h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      line-height: 1.05;
+      color: var(--text);
+    }
+
+    .setup-panel p {
+      margin: 0 0 22px;
+      color: rgba(0, 72, 112, 0.78);
+      line-height: 1.4;
+    }
+
+    .setup-fields {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .setup-field label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+    }
+
+    .setup-field input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid rgba(35, 135, 159, 0.26);
+      border-radius: 10px;
+      background: rgba(218, 251, 233, 0.48);
+      color: var(--text);
+      font: inherit;
+      font-size: 18px;
+    }
+
+    .setup-field input:focus {
+      outline: 2px solid rgba(80, 211, 223, 0.5);
+      border-color: var(--secondary);
+      background: white;
+    }
+
+    .start-game-btn {
+      width: 100%;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, #23879f, #16b7a7);
+      color: white;
+      font-weight: 800;
+      box-shadow: 0 12px 24px rgba(0, 72, 112, 0.18);
+    }
+
+    .countdown-number {
+      min-width: 190px;
+      min-height: 190px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(189, 246, 224, 0.82)),
+        linear-gradient(135deg, #50d3df, #16b7a7);
+      color: var(--text);
+      font-size: clamp(58px, 12vw, 116px);
+      font-weight: 900;
+      box-shadow:
+        0 0 0 12px rgba(80, 211, 223, 0.12),
+        0 26px 48px rgba(0, 72, 112, 0.2);
+      animation: countdownPop 0.72s ease both;
+    }
+
+    @keyframes countdownPop {
+      0% {
+        opacity: 0;
+        transform: scale(0.72);
+      }
+      42% {
+        opacity: 1;
+        transform: scale(1.08);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
     @media (max-width: 780px) {
       body {
         align-items: flex-start;
@@ -948,6 +1073,29 @@
         <p>Final Score: <span id="finalScore">0</span></p>
         <button id="restartBtn">Play Again</button>
       </div>
+    </div>
+
+    <div id="setupOverlay" class="setup-overlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
+      <form class="setup-panel">
+        <img src="https://i.ibb.co/C3KcP9cZ/Adaptivelogotrans.png" alt="Adaptive">
+        <h1 id="setupTitle">Set up Re-Call</h1>
+        <p>Choose player names before the first card is drawn.</p>
+        <div class="setup-fields">
+          <div class="setup-field">
+            <label for="setupPlayer1">Player 1</label>
+            <input id="setupPlayer1" name="player1" type="text" value="Player 1" maxlength="24" autocomplete="off">
+          </div>
+          <div class="setup-field">
+            <label for="setupPlayer2">Player 2</label>
+            <input id="setupPlayer2" name="player2" type="text" value="Player 2" maxlength="24" autocomplete="off">
+          </div>
+        </div>
+        <button class="start-game-btn" type="submit">Start</button>
+      </form>
+    </div>
+
+    <div id="countdownOverlay" class="countdown-overlay hidden" aria-live="assertive" aria-hidden="true">
+      <div class="countdown-number">3</div>
     </div>
   </div>
 
@@ -1132,6 +1280,7 @@
 
       setupEventListeners(game) {
         document.getElementById("restartBtn").addEventListener("click", () => game.restart());
+        this.setupStartOverlay(game);
 
         document.querySelectorAll(".player-score span").forEach((element, index) => {
           element.addEventListener("blur", () => {
@@ -1153,9 +1302,23 @@
         });
       }
 
+      setupStartOverlay(game) {
+        const overlay = document.getElementById("setupOverlay");
+        const form = overlay.querySelector(".setup-panel");
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          game.startFromSetup();
+        });
+      }
+
       setupDeckInteraction(game) {
         const deck = document.querySelector(".deck");
         const draw = () => {
+          if (!game.canDraw()) {
+            return;
+          }
+
           if (!game.roundActive) {
             game.endRound();
             return;
@@ -1225,8 +1388,13 @@
         });
 
         document.addEventListener("keydown", (event) => {
-          if (event.code === "Space" && !game.isEditing) {
+          const isTextInput = event.target?.matches?.("input, textarea, select");
+          if (event.code === "Space" && !game.isEditing && !isTextInput) {
             event.preventDefault();
+            if (!game.canDraw()) {
+              return;
+            }
+
             if (!game.roundActive) {
               game.endRound();
               return;
@@ -1613,6 +1781,9 @@
         this.memoryCardCount = 0;
         this.isDrawing = false;
         this.turnAdvanceTimer = null;
+        this.gameStarted = false;
+        this.countdownActive = false;
+        this.countdownTimer = null;
         this.roundActive = true;
         this.secondChanceUsed = false;
         this.deckElement = document.querySelector(".deck");
@@ -1625,6 +1796,7 @@
         this.initializeEventHandlers();
         this.initializeGame();
         this.preloadImagesInBackground();
+        window.setTimeout(() => document.getElementById("setupPlayer1").focus(), 120);
       }
 
       applyAssetPaths() {
@@ -1655,6 +1827,75 @@
         this.ui.updateMemoryStrip(this.roundSequence, this.memoryCardCount);
       }
 
+      canDraw() {
+        return this.gameStarted && !this.countdownActive && !this.isDrawing;
+      }
+
+      startFromSetup() {
+        const nameInputs = [document.getElementById("setupPlayer1"), document.getElementById("setupPlayer2")];
+
+        this.players.forEach((player, index) => {
+          player.name = nameInputs[index].value.trim() || `Player ${index + 1}`;
+        });
+
+        this.ui.updatePlayerDisplay(this.players, this.currentPlayerIndex);
+        document.getElementById("setupOverlay").classList.add("hidden");
+        this.startCountdown();
+      }
+
+      startCountdown() {
+        const overlay = document.getElementById("countdownOverlay");
+        const countdownNumber = overlay.querySelector(".countdown-number");
+        const steps = ["3", "2", "1", "Go"];
+        let index = 0;
+
+        window.clearTimeout(this.countdownTimer);
+        this.gameStarted = false;
+        this.countdownActive = true;
+        overlay.classList.remove("hidden");
+        overlay.setAttribute("aria-hidden", "false");
+
+        const showStep = () => {
+          countdownNumber.textContent = steps[index];
+          countdownNumber.style.animation = "none";
+          countdownNumber.offsetHeight;
+          countdownNumber.style.animation = "";
+
+          index += 1;
+          if (index < steps.length) {
+            this.countdownTimer = window.setTimeout(showStep, 820);
+            return;
+          }
+
+          this.countdownTimer = window.setTimeout(() => {
+            overlay.classList.add("hidden");
+            overlay.setAttribute("aria-hidden", "true");
+            this.gameStarted = true;
+            this.countdownActive = false;
+            this.countdownTimer = null;
+            this.deckElement.focus();
+          }, 720);
+        };
+
+        showStep();
+      }
+
+      showSetupOverlay() {
+        window.clearTimeout(this.countdownTimer);
+        this.countdownTimer = null;
+        this.gameStarted = false;
+        this.countdownActive = false;
+
+        const setupOverlay = document.getElementById("setupOverlay");
+        const countdownOverlay = document.getElementById("countdownOverlay");
+        document.getElementById("setupPlayer1").value = this.players[0].name;
+        document.getElementById("setupPlayer2").value = this.players[1].name;
+        setupOverlay.classList.remove("hidden");
+        countdownOverlay.classList.add("hidden");
+        countdownOverlay.setAttribute("aria-hidden", "true");
+        window.setTimeout(() => document.getElementById("setupPlayer1").focus(), 120);
+      }
+
       setupCards() {
         this.deckManager.reset();
         this.deckManager.createNounCards(nounFiles.map(asset));
@@ -1672,6 +1913,10 @@
       }
 
       async drawNewCard() {
+        if (!this.canDraw()) {
+          return;
+        }
+
         if (this.isDrawing) {
           return;
         }
@@ -1742,6 +1987,8 @@
       endRound() {
         window.clearTimeout(this.turnAdvanceTimer);
         this.turnAdvanceTimer = null;
+        window.clearTimeout(this.countdownTimer);
+        this.countdownTimer = null;
         document.querySelectorAll(".game-message.persistent").forEach((message) => message.remove());
 
         this.playedCards = [];
@@ -1792,6 +2039,7 @@
         document.getElementById("gameOverModal").classList.add("hidden");
         this.players = [new Player("Player 1"), new Player("Player 2")];
         this.endRound();
+        this.showSetupOverlay();
       }
 
       resolveChallenge(challengeCorrect) {
