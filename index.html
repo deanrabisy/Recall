@@ -350,6 +350,54 @@
       font-size: 17px;
     }
 
+    .accuse-control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 2px;
+      padding: 7px 9px;
+      border: 1px solid rgba(35, 135, 159, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 8px 18px rgba(0, 72, 112, 0.1);
+      backdrop-filter: blur(8px);
+    }
+
+    .accuse-icon {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #bdf6e0, #50d3df);
+      color: var(--text);
+      font-weight: 900;
+      line-height: 1;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.56);
+    }
+
+    .accuse-arrow {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 50%;
+      background: rgba(218, 251, 233, 0.92);
+      color: var(--text);
+      font-size: 23px;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px rgba(35, 135, 159, 0.18);
+    }
+
+    .accuse-arrow:hover,
+    .accuse-arrow:focus-visible {
+      background: linear-gradient(135deg, #50d3df, #16b7a7);
+      color: white;
+      box-shadow: 0 0 0 5px rgba(80, 211, 223, 0.16);
+    }
+
     .message-zone {
       position: absolute;
       top: 122px;
@@ -641,6 +689,47 @@
       padding: 8px 16px;
       background: var(--danger);
       color: white;
+    }
+
+    .challenge-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid rgba(35, 135, 159, 0.18);
+      border-radius: 12px;
+      background: rgba(218, 251, 233, 0.58);
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .challenge-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .challenge-result-btn {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: 50%;
+      color: white;
+      font-size: 24px;
+      font-weight: 900;
+      box-shadow: 0 10px 20px rgba(0, 72, 112, 0.14);
+    }
+
+    .challenge-result-btn.correct {
+      background: linear-gradient(135deg, #16b7a7, #50d3df);
+    }
+
+    .challenge-result-btn.wrong {
+      background: linear-gradient(135deg, #004870, #23879f);
     }
 
     .sequence-display.active .sequence-card.reveal-card img {
@@ -1043,6 +1132,11 @@
       <div class="reveal-btn-container">
         <button class="legend-btn" title="Show legend" aria-label="Show legend">Legend</button>
         <button class="reveal-btn">Review</button>
+        <div class="accuse-control" aria-label="Accuse a player">
+          <button class="accuse-arrow accuse-left" type="button" data-accuse-player="0" title="Accuse left player" aria-label="Accuse left player">←</button>
+          <span class="accuse-icon" aria-hidden="true">!</span>
+          <button class="accuse-arrow accuse-right" type="button" data-accuse-player="1" title="Accuse right player" aria-label="Accuse right player">→</button>
+        </div>
       </div>
       <div class="message-zone" aria-live="polite"></div>
 
@@ -1299,6 +1393,13 @@
 
         document.querySelector(".reveal-btn").addEventListener("click", () => {
           game.showSequence();
+        });
+
+        document.querySelectorAll(".accuse-arrow").forEach((button) => {
+          button.addEventListener("click", () => {
+            const accusedIndex = Number.parseInt(button.dataset.accusePlayer, 10);
+            game.openAccusation(accusedIndex);
+          });
         });
       }
 
@@ -1559,9 +1660,22 @@
           document.querySelector(".game-board").appendChild(sequenceDisplay);
         }
 
+        const accusedIndex = this.game.pendingAccusedIndex;
+        const accused = Number.isInteger(accusedIndex) ? this.game.players[accusedIndex] : null;
+        const challengeMarkup = accused ? `
+            <div class="challenge-panel">
+              <span>${accused.name} was accused</span>
+              <div class="challenge-actions" aria-label="Accusation result">
+                <button class="challenge-result-btn correct" type="button" data-accused-wrong="true" title="Accused player was wrong" aria-label="Accused player was wrong">✓</button>
+                <button class="challenge-result-btn wrong" type="button" data-accused-wrong="false" title="Accused player was right" aria-label="Accused player was right">×</button>
+              </div>
+            </div>
+        ` : "";
+
         sequenceDisplay.innerHTML = `
           <div class="sequence-panel">
             <button class="hide-sequence-btn">Hide</button>
+            ${challengeMarkup}
             <div class="sequence-cards">
               ${sequence.map((card, index) => `
                 <div class="sequence-card${animateReveal ? " reveal-card" : ""}" style="--delay: ${(sequence.length - index - 1) * 0.08}s">
@@ -1574,6 +1688,8 @@
 
         sequenceDisplay.onclick = () => {
           sequenceDisplay.classList.remove("active");
+          this.game.pendingAccusedIndex = null;
+          this.updateSequenceDisplay(this.game.roundSequence);
         };
 
         const sequencePanel = sequenceDisplay.querySelector(".sequence-panel");
@@ -1585,7 +1701,15 @@
 
         sequenceDisplay.querySelector(".hide-sequence-btn").onclick = () => {
           sequenceDisplay.classList.remove("active");
+          this.game.pendingAccusedIndex = null;
+          this.updateSequenceDisplay(this.game.roundSequence);
         };
+
+        sequenceDisplay.querySelectorAll(".challenge-result-btn").forEach((button) => {
+          button.onclick = () => {
+            this.game.resolveAccusation(button.dataset.accusedWrong === "true");
+          };
+        });
       }
 
       updateMemoryStrip(sequence, visibleCount, receivingIndex = -1) {
@@ -1784,6 +1908,7 @@
         this.gameStarted = false;
         this.countdownActive = false;
         this.countdownTimer = null;
+        this.pendingAccusedIndex = null;
         this.roundActive = true;
         this.secondChanceUsed = false;
         this.deckElement = document.querySelector(".deck");
@@ -1998,6 +2123,7 @@
         this.currentDisplayedCard = null;
         this.memoryCardCount = 0;
         this.secondChanceUsed = false;
+        this.pendingAccusedIndex = null;
         this.roundActive = true;
         this.currentPlayerIndex = 0;
         this.players.forEach((player, index) => {
@@ -2025,10 +2151,45 @@
         this.ui.updateUseChanceButton(playerIndex);
       }
 
-      showSequence(forceOpen = false) {
+      showSequence(forceOpen = false, keepAccusation = false) {
+        if (!keepAccusation) {
+          this.pendingAccusedIndex = null;
+        }
+
         const sequenceDisplay = document.querySelector(".sequence-display");
         this.ui.updateSequenceDisplay(this.roundSequence, true);
         sequenceDisplay.classList.toggle("active", forceOpen || !sequenceDisplay.classList.contains("active"));
+      }
+
+      openAccusation(accusedIndex) {
+        if (!this.gameStarted || this.countdownActive || !Number.isInteger(accusedIndex)) {
+          return;
+        }
+
+        this.pendingAccusedIndex = accusedIndex;
+        this.showSequence(true, true);
+      }
+
+      resolveAccusation(accusedWasWrong) {
+        if (!Number.isInteger(this.pendingAccusedIndex)) {
+          return;
+        }
+
+        const accusedIndex = this.pendingAccusedIndex;
+        const scorerIndex = accusedWasWrong ? (accusedIndex + 1) % this.players.length : accusedIndex;
+        const accused = this.players[accusedIndex];
+        const scorer = this.players[scorerIndex];
+
+        scorer.score += 1;
+        this.messageManager.showMessage(
+          accusedWasWrong
+            ? `${accused.name} was wrong. ${scorer.name} gets a point!`
+            : `${accused.name} was right. ${scorer.name} gets a point!`,
+          "success"
+        );
+        this.ui.updatePlayerDisplay(this.players, this.currentPlayerIndex);
+        this.pendingAccusedIndex = null;
+        this.endRound();
       }
 
       showMessage(text, type, persistent = false) {
