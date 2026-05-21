@@ -2243,8 +2243,10 @@
         announcement.appendChild(card);
 
         document.body.appendChild(announcement);
-        this.playWinnerCelebration(winnerIndex);
-        window.setTimeout(() => announcement.remove(), 3300);
+        window.setTimeout(() => {
+          announcement.remove();
+          this.playWinnerCelebration(winnerIndex);
+        }, 3300);
       }
 
       playWinnerCelebration(winnerIndex) {
