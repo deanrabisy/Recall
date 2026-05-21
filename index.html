@@ -663,6 +663,52 @@
       filter: drop-shadow(0 0 14px rgba(80, 211, 223, 0.58));
     }
 
+    .player-card.celebrating-win {
+      animation: winnerCardPulse 1.05s ease-in-out 3;
+      box-shadow:
+        0 0 0 3px rgba(80, 211, 223, 0.5),
+        0 0 34px rgba(22, 183, 167, 0.48),
+        0 18px 36px rgba(0, 72, 112, 0.18);
+    }
+
+    .winner-confetti,
+    .winner-firework-ring {
+      position: fixed;
+      z-index: 1006;
+      pointer-events: none;
+    }
+
+    .winner-confetti {
+      width: 10px;
+      height: 17px;
+      border-radius: 2px;
+      background: var(--confetti-color, #50d3df);
+      border: 1px solid rgba(0, 72, 112, 0.32);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.72),
+        0 0 14px rgba(80, 211, 223, 0.78),
+        0 7px 14px rgba(0, 72, 112, 0.28);
+      transform-origin: center;
+    }
+
+    .winner-firework-ring {
+      border: 3px solid rgba(0, 72, 112, 0.72);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 4px rgba(80, 211, 223, 0.42),
+        0 0 26px rgba(80, 211, 223, 0.86),
+        inset 0 0 22px rgba(22, 183, 167, 0.3);
+    }
+
+    @keyframes winnerCardPulse {
+      0%, 100% {
+        transform: translateY(-2px) scale(1);
+      }
+      50% {
+        transform: translateY(-7px) scale(1.035);
+      }
+    }
+
     @keyframes drawCard {
       0% {
         opacity: 0;
@@ -2173,7 +2219,7 @@
         button.disabled = !hasChanceCards;
       }
 
-      showRoundResult({ winner, loser, status, scoreLine }) {
+      showRoundResult({ winner, winnerIndex, loser, status, scoreLine }) {
         document.querySelectorAll(".round-result-announcement").forEach((announcement) => announcement.remove());
 
         const announcement = document.createElement("div");
@@ -2197,7 +2243,90 @@
         announcement.appendChild(card);
 
         document.body.appendChild(announcement);
+        this.playWinnerCelebration(winnerIndex);
         window.setTimeout(() => announcement.remove(), 3300);
+      }
+
+      playWinnerCelebration(winnerIndex) {
+        const playerCard = document.getElementById(`player${winnerIndex + 1}Card`);
+        if (!playerCard) {
+          return;
+        }
+
+        const rect = playerCard.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const radius = Math.max(rect.width, rect.height) * 0.82;
+        const colors = ["#004870", "#23879f", "#16b7a7", "#50d3df", "#e4e09a", "#ffffff"];
+
+        playerCard.classList.add("celebrating-win");
+        window.setTimeout(() => playerCard.classList.remove("celebrating-win"), 3300);
+
+        Array.from({ length: 3 }).forEach((_, ringIndex) => {
+          const ring = document.createElement("div");
+          const size = radius * (1.05 + ringIndex * 0.24);
+
+          ring.className = "winner-firework-ring";
+          ring.style.left = `${centerX - size / 2}px`;
+          ring.style.top = `${centerY - size / 2}px`;
+          ring.style.width = `${size}px`;
+          ring.style.height = `${size}px`;
+          document.body.appendChild(ring);
+
+          ring.animate([
+            { opacity: 0, transform: "scale(0.48)" },
+            { opacity: 0.72, transform: "scale(0.78)", offset: 0.18 },
+            { opacity: 0, transform: "scale(1.22)" }
+          ], {
+            duration: 1250 + ringIndex * 220,
+            delay: ringIndex * 160,
+            easing: "cubic-bezier(0.16, 0.84, 0.24, 1)",
+            fill: "forwards"
+          }).onfinish = () => ring.remove();
+        });
+
+        Array.from({ length: 34 }).forEach((_, index) => {
+          const confetti = document.createElement("span");
+          const angle = (Math.PI * 2 * index) / 34;
+          const startJitter = 18 + (index % 5) * 4;
+          const distance = radius * (0.82 + (index % 7) * 0.08);
+          const startX = centerX + Math.cos(angle) * startJitter;
+          const startY = centerY + Math.sin(angle) * startJitter;
+          const endX = centerX + Math.cos(angle) * distance;
+          const endY = centerY + Math.sin(angle) * distance + 36 + (index % 6) * 9;
+
+          confetti.className = "winner-confetti";
+          confetti.style.setProperty("--confetti-color", colors[index % colors.length]);
+          confetti.style.left = `${startX}px`;
+          confetti.style.top = `${startY}px`;
+          confetti.style.transform = `rotate(${index * 23}deg)`;
+          document.body.appendChild(confetti);
+
+          confetti.animate([
+            {
+              left: `${startX}px`,
+              top: `${startY}px`,
+              opacity: 0,
+              transform: `rotate(${index * 23}deg) scale(0.5)`
+            },
+            {
+              opacity: 1,
+              transform: `rotate(${index * 23 + 90}deg) scale(1)`,
+              offset: 0.16
+            },
+            {
+              left: `${endX}px`,
+              top: `${endY}px`,
+              opacity: 0,
+              transform: `rotate(${index * 23 + 420}deg) scale(0.72)`
+            }
+          ], {
+            duration: 1600 + (index % 8) * 110,
+            delay: (index % 6) * 55,
+            easing: "cubic-bezier(0.12, 0.72, 0.18, 1)",
+            fill: "forwards"
+          }).onfinish = () => confetti.remove();
+        });
       }
     }
 
@@ -2509,6 +2638,7 @@
         scorer.score += 1;
         this.ui.showRoundResult({
           winner: scorer,
+          winnerIndex: scorerIndex,
           loser,
           status: accusedWasWrong ? `${accused.name} was wrong` : `${accused.name} was right`,
           scoreLine: `${this.players[0].name} ${this.players[0].score} - ${this.players[1].score} ${this.players[1].name}`
