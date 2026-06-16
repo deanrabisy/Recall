@@ -75,7 +75,7 @@
       top: 10px;
       left: 12px;
       z-index: 2;
-      width: clamp(82px, 10.2vw, 128px);
+      width: clamp(132px, 14vw, 190px);
       height: auto;
       object-fit: contain;
     }
@@ -1096,7 +1096,7 @@
 
     .setup-panel img {
       display: block;
-      width: 132px;
+      width: min(240px, 72vw);
       height: auto;
       margin-bottom: 22px;
     }
@@ -1140,7 +1140,19 @@
       font-size: 18px;
     }
 
-    .setup-field input:focus {
+    .setup-field select {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid rgba(35, 135, 159, 0.26);
+      border-radius: 10px;
+      background: rgba(218, 251, 233, 0.48);
+      color: var(--text);
+      font: inherit;
+      font-size: 18px;
+    }
+
+    .setup-field input:focus,
+    .setup-field select:focus {
       outline: 2px solid rgba(80, 211, 223, 0.5);
       border-color: var(--secondary);
       background: white;
@@ -1198,7 +1210,7 @@
       }
 
       .brand-logo {
-        width: 95px;
+        width: 140px;
       }
 
       .players-container {
@@ -1263,7 +1275,7 @@
 <body>
   <div class="game-container">
     <div class="game-board">
-      <img class="brand-logo" src="https://i.ibb.co/C3KcP9cZ/Adaptivelogotrans.png" alt="Adaptive">
+      <img class="brand-logo" src="assets/recall-logo-v2.png" alt="Re-Call">
       <button class="reset-round" title="Reset round" aria-label="Reset round">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"></path>
@@ -1347,7 +1359,7 @@
 
     <div id="setupOverlay" class="setup-overlay" role="dialog" aria-modal="true" aria-labelledby="setupTitle">
       <form class="setup-panel">
-        <img src="https://i.ibb.co/C3KcP9cZ/Adaptivelogotrans.png" alt="Adaptive">
+        <img src="assets/recall-logo-v2.png" alt="Re-Call">
         <h1 id="setupTitle">Set up Re-Call</h1>
         <p>Choose player names before the first card is drawn.</p>
         <div class="setup-fields">
@@ -1358,6 +1370,14 @@
           <div class="setup-field">
             <label for="setupPlayer2">Player 2</label>
             <input id="setupPlayer2" name="player2" type="text" value="Player 2" maxlength="24" autocomplete="off">
+          </div>
+          <div class="setup-field">
+            <label for="setupDeck">Deck</label>
+            <select id="setupDeck" name="deck">
+              <option value="groceries">Groceries - I would like some...</option>
+              <option value="restaurant">Restaurant - I would like to order...</option>
+              <option value="home">Home - At home I have...</option>
+            </select>
           </div>
         </div>
         <button class="start-game-btn" type="submit">Start</button>
@@ -1414,7 +1434,7 @@
       "ncn - wine.png": "assets/cards/ncn---wine.jpg"
     };
 
-    const asset = (filename) => IMAGE_URLS[filename];
+    const asset = (filename) => IMAGE_URLS[filename] || filename;
 
     const nounFiles = [
       "ncn - basil.png", "ncn - beer.png", "ncn - bread.png",
@@ -1429,6 +1449,50 @@
       "ncn - spaghetti.png", "ncn - sugar.png", "ncn - tofu.png",
       "ncn - tea.png", "ncn - wine.png", "ncn - water.png"
     ];
+
+    const restaurantFiles = [
+      "restaurant-pizza.jpg", "restaurant-burger.jpg", "restaurant-pasta.jpg",
+      "restaurant-sushi.jpg", "restaurant-tacos.jpg", "restaurant-salad.jpg",
+      "restaurant-soup.jpg", "restaurant-steak.jpg", "restaurant-fries.jpg",
+      "restaurant-sandwich.jpg", "restaurant-curry.jpg", "restaurant-noodles.jpg",
+      "restaurant-dumplings.jpg", "restaurant-pancakes.jpg", "restaurant-omelet.jpg",
+      "restaurant-falafel.jpg", "restaurant-shawarma.jpg", "restaurant-ramen.jpg",
+      "restaurant-burrito.jpg", "restaurant-lasagna.jpg", "restaurant-risotto.jpg",
+      "restaurant-kebab.jpg", "restaurant-fish.jpg", "restaurant-chicken.jpg",
+      "restaurant-rice-bowl.jpg", "restaurant-hot-dog.jpg", "restaurant-nachos.jpg",
+      "restaurant-ice-cream.jpg", "restaurant-cake.jpg", "restaurant-coffee.jpg"
+    ].map((filename) => `assets/cards/restaurant/${filename}`);
+
+    const homeFiles = [
+      "home-sofa.jpg", "home-chair.jpg", "home-table.jpg",
+      "home-lamp.jpg", "home-bed.jpg", "home-pillow.jpg",
+      "home-blanket.jpg", "home-mirror.jpg", "home-clock.jpg",
+      "home-keys.jpg", "home-door.jpg", "home-window.jpg",
+      "home-plant.jpg", "home-books.jpg", "home-phone.jpg",
+      "home-laptop.jpg", "home-remote.jpg", "home-towel.jpg",
+      "home-toothbrush.jpg", "home-soap.jpg", "home-shampoo.jpg",
+      "home-shoes.jpg", "home-coat.jpg", "home-bag.jpg",
+      "home-cup.jpg", "home-plate.jpg", "home-fork.jpg",
+      "home-spoon.jpg", "home-fridge.jpg", "home-oven.jpg"
+    ].map((filename) => `assets/cards/home/${filename}`);
+
+    const DECKS = {
+      groceries: {
+        label: "Groceries",
+        prompt: "I would like some...",
+        files: nounFiles.map(asset)
+      },
+      restaurant: {
+        label: "Restaurant",
+        prompt: "I would like to order...",
+        files: restaurantFiles
+      },
+      home: {
+        label: "Home",
+        prompt: "At home I have...",
+        files: homeFiles
+      }
+    };
 
     const chanceFiles = [
       "2nd chance - 1.png", "2nd chance - 2.png", "2nd chance - 3.png",
@@ -1452,16 +1516,27 @@
       getLabelFromPath(path) {
         const filename = decodeURIComponent(path.split("/").pop() || "");
         const nameWithoutExt = filename.replace(/\.[^.]+$/, "");
+        const titleCase = (value) => value
+          .split(/[\s-]+/)
+          .filter(Boolean)
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(" ");
         if (nameWithoutExt.startsWith("ncn - ")) {
           return nameWithoutExt.replace("ncn - ", "");
         }
         if (nameWithoutExt.startsWith("ncn-")) {
-          return nameWithoutExt.replace("ncn-", "");
+          return titleCase(nameWithoutExt.replace(/^ncn-+/, ""));
+        }
+        if (nameWithoutExt.startsWith("restaurant-")) {
+          return titleCase(nameWithoutExt.replace("restaurant-", ""));
+        }
+        if (nameWithoutExt.startsWith("home-")) {
+          return titleCase(nameWithoutExt.replace("home-", ""));
         }
         if (nameWithoutExt.startsWith("2nd chance") || nameWithoutExt.startsWith("2nd-chance")) {
           return "Second Chance";
         }
-        return nameWithoutExt;
+        return titleCase(nameWithoutExt);
       }
     }
 
@@ -2350,6 +2425,7 @@
         this.countdownTimer = null;
         this.pendingAccusedIndex = null;
         this.pendingSecondChanceIndex = null;
+        this.selectedDeckKey = "groceries";
         this.roundActive = true;
         this.secondChanceUsed = false;
         this.deckElement = document.querySelector(".deck");
@@ -2391,6 +2467,7 @@
         this.ui.updatePlayerDisplay(this.players, this.currentPlayerIndex);
         this.ui.updateSequenceDisplay(this.roundSequence);
         this.ui.updateMemoryStrip(this.roundSequence, this.memoryCardCount);
+        this.applyDeckPrompt();
       }
 
       canDraw() {
@@ -2399,11 +2476,15 @@
 
       startFromSetup() {
         const nameInputs = [document.getElementById("setupPlayer1"), document.getElementById("setupPlayer2")];
+        const selectedDeck = document.getElementById("setupDeck").value;
 
         this.players.forEach((player, index) => {
           player.name = nameInputs[index].value.trim() || `Player ${index + 1}`;
         });
 
+        this.selectedDeckKey = DECKS[selectedDeck] ? selectedDeck : "groceries";
+        this.endRound();
+        this.applyDeckPrompt();
         this.ui.updatePlayerDisplay(this.players, this.currentPlayerIndex);
         document.getElementById("setupOverlay").classList.add("hidden");
         this.startCountdown();
@@ -2456,21 +2537,31 @@
         const countdownOverlay = document.getElementById("countdownOverlay");
         document.getElementById("setupPlayer1").value = this.players[0].name;
         document.getElementById("setupPlayer2").value = this.players[1].name;
+        document.getElementById("setupDeck").value = this.selectedDeckKey;
         setupOverlay.classList.remove("hidden");
         countdownOverlay.classList.add("hidden");
         countdownOverlay.setAttribute("aria-hidden", "true");
         window.setTimeout(() => document.getElementById("setupPlayer1").focus(), 120);
       }
 
+      getActiveDeck() {
+        return DECKS[this.selectedDeckKey] || DECKS.groceries;
+      }
+
+      applyDeckPrompt() {
+        document.querySelector(".sentence-starter h2").textContent = this.getActiveDeck().prompt;
+      }
+
       setupCards() {
         this.deckManager.reset();
-        this.deckManager.createNounCards(nounFiles.map(asset));
+        this.deckManager.createNounCards(this.getActiveDeck().files);
         this.deckManager.createChanceCards(chanceFiles.map(asset));
         this.deckManager.shuffleDeck();
       }
 
       preloadImagesInBackground() {
-        const imagePaths = [deckBack, legendImage, ...nounFiles.map(asset), ...chanceFiles.map(asset)];
+        const deckImages = Object.values(DECKS).flatMap((deck) => deck.files);
+        const imagePaths = [deckBack, legendImage, ...deckImages, ...chanceFiles.map(asset)];
         imagePaths.forEach((path) => {
           const img = new Image();
           img.decoding = "async";
