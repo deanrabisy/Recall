@@ -22,20 +22,70 @@ INK = (34, 68, 82)
 WHITE = (255, 255, 250)
 
 
-RESTAURANT_WORDS = [
-    "Pizza", "Burger", "Pasta", "Sushi", "Tacos", "Salad",
-    "Soup", "Steak", "Fries", "Sandwich", "Curry", "Noodles",
-    "Dumplings", "Pancakes", "Omelet", "Falafel", "Shawarma", "Ramen",
-    "Burrito", "Lasagna", "Risotto", "Kebab", "Fish", "Chicken",
-    "Rice Bowl", "Hot Dog", "Nachos", "Ice Cream", "Cake", "Coffee",
+RESTAURANT_CARDS = [
+    ("pizza", "a pizza"),
+    ("burger", "a burger"),
+    ("pasta", "a bowl of pasta"),
+    ("sushi", "a sushi roll"),
+    ("tacos", "a taco"),
+    ("salad", "a salad"),
+    ("soup", "a bowl of soup"),
+    ("steak", "a steak"),
+    ("fries", "a portion of fries"),
+    ("sandwich", "a sandwich"),
+    ("curry", "a curry"),
+    ("noodles", "a bowl of noodles"),
+    ("dumplings", "a dumpling"),
+    ("pancakes", "a pancake"),
+    ("omelet", "an omelet"),
+    ("falafel", "a falafel"),
+    ("shawarma", "a shawarma"),
+    ("ramen", "a bowl of ramen"),
+    ("burrito", "a burrito"),
+    ("lasagna", "a lasagna"),
+    ("risotto", "a risotto"),
+    ("kebab", "a kebab"),
+    ("fish", "a fish"),
+    ("chicken", "a chicken dish"),
+    ("rice-bowl", "a rice bowl"),
+    ("hot-dog", "a hot dog"),
+    ("nachos", "a plate of nachos"),
+    ("ice-cream", "an ice cream cone"),
+    ("cake", "a slice of cake"),
+    ("coffee", "a cup of coffee"),
 ]
 
-HOME_WORDS = [
-    "Sofa", "Chair", "Table", "Lamp", "Bed", "Pillow",
-    "Blanket", "Mirror", "Clock", "Keys", "Door", "Window",
-    "Plant", "Books", "Phone", "Laptop", "Remote", "Towel",
-    "Toothbrush", "Soap", "Shampoo", "Shoes", "Coat", "Bag",
-    "Cup", "Plate", "Fork", "Spoon", "Fridge", "Oven",
+HOME_CARDS = [
+    ("sofa", "a sofa"),
+    ("chair", "a chair"),
+    ("table", "a table"),
+    ("lamp", "a lamp"),
+    ("bed", "a bed"),
+    ("pillow", "a pillow"),
+    ("blanket", "a blanket"),
+    ("mirror", "a mirror"),
+    ("clock", "a clock"),
+    ("keys", "a key"),
+    ("door", "a door"),
+    ("window", "a window"),
+    ("plant", "a plant"),
+    ("books", "a book"),
+    ("phone", "a phone"),
+    ("laptop", "a laptop"),
+    ("remote", "a remote"),
+    ("towel", "a towel"),
+    ("toothbrush", "a toothbrush"),
+    ("soap", "a bar of soap"),
+    ("shampoo", "a bottle of shampoo"),
+    ("shoes", "a shoe"),
+    ("coat", "a coat"),
+    ("bag", "a bag"),
+    ("cup", "a cup"),
+    ("plate", "a plate"),
+    ("fork", "a fork"),
+    ("spoon", "a spoon"),
+    ("fridge", "a fridge"),
+    ("oven", "an oven"),
 ]
 
 
@@ -176,22 +226,48 @@ def draw_home_icon(draw, title, rng):
             draw.arc((cx - 120 + i * 24, cy - 98 + i * 22, cx + 120 - i * 18, cy + 98 + i * 18), 10, 170, fill=WHITE + (170,), width=5)
 
 
-def draw_card(title, deck, out_path):
+def crop_sheet_art(deck, index):
+    sheet_number = index // 6 + 1
+    sheet_position = index % 6
+    sheet_path = Path("assets") / "generated-sheets" / f"{deck}-{sheet_number:02}.png"
+    if not sheet_path.exists():
+        return None
+
+    sheet = Image.open(sheet_path).convert("RGB")
+    cell_w = sheet.width / 3
+    cell_h = sheet.height / 2
+    col = sheet_position % 3
+    row = sheet_position // 3
+    margin_x = int(cell_w * 0.045)
+    margin_y = int(cell_h * 0.06)
+    crop_box = (
+        int(col * cell_w + margin_x),
+        int(row * cell_h + margin_y),
+        int((col + 1) * cell_w - margin_x),
+        int((row + 1) * cell_h - margin_y),
+    )
+    art = sheet.crop(crop_box)
+    return art.resize((ART_W, ART_H), Image.Resampling.LANCZOS).convert("RGBA")
+
+
+def draw_card(slug, title, deck, out_path, index=None):
     seed = f"{deck}:{title}"
     rng = random.Random(seed)
     card = Image.new("RGB", (CARD_W, CARD_H), TEAL)
-    art = watercolor_background(seed)
-    art_draw = ImageDraw.Draw(art, "RGBA")
-    if deck == "restaurant":
-        draw_restaurant_icon(art_draw, title, rng)
-    else:
-        draw_home_icon(art_draw, title, rng)
+    art = crop_sheet_art(deck, index) if index is not None else None
+    if art is None:
+        art = watercolor_background(seed)
+        art_draw = ImageDraw.Draw(art, "RGBA")
+        if deck == "restaurant":
+            draw_restaurant_icon(art_draw, title, rng)
+        else:
+            draw_home_icon(art_draw, title, rng)
     card.paste(art.convert("RGB"), (ART_X, ART_Y))
     draw = ImageDraw.Draw(card)
     draw.rectangle((ART_X, ART_Y, ART_X + ART_W, ART_Y + ART_H), outline=(0, 54, 78), width=5)
     draw.rectangle((0, BAND_Y, CARD_W, CARD_H), fill=TEAL)
     draw.line((0, BAND_Y, CARD_W, BAND_Y), fill=CYAN, width=4)
-    fnt = fit_font(draw, title, CARD_W - 90)
+    fnt = fit_font(draw, title, CARD_W - 90, start_size=124)
     bbox = draw.textbbox((0, 0), title, font=fnt)
     text_w = bbox[2] - bbox[0]
     text_h = bbox[3] - bbox[1]
@@ -221,10 +297,10 @@ def draw_logo(out_path):
 
 def main():
     root = Path("assets")
-    for word in RESTAURANT_WORDS:
-        draw_card(word, "restaurant", root / "cards" / "restaurant" / f"restaurant-{word.lower().replace(' ', '-')}.jpg")
-    for word in HOME_WORDS:
-        draw_card(word, "home", root / "cards" / "home" / f"home-{word.lower().replace(' ', '-')}.jpg")
+    for index, (slug, label) in enumerate(RESTAURANT_CARDS):
+        draw_card(slug, label, "restaurant", root / "cards" / "restaurant" / f"restaurant-{slug}.jpg", index)
+    for index, (slug, label) in enumerate(HOME_CARDS):
+        draw_card(slug, label, "home", root / "cards" / "home" / f"home-{slug}.jpg", index)
     draw_logo(root / "recall-logo-v2.png")
 
 

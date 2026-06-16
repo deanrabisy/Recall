@@ -1476,6 +1476,69 @@
       "home-spoon.jpg", "home-fridge.jpg", "home-oven.jpg"
     ].map((filename) => `assets/cards/home/${filename}`);
 
+    const CARD_LABELS = {
+      "assets/cards/restaurant/restaurant-pizza.jpg": "a pizza",
+      "assets/cards/restaurant/restaurant-burger.jpg": "a burger",
+      "assets/cards/restaurant/restaurant-pasta.jpg": "a bowl of pasta",
+      "assets/cards/restaurant/restaurant-sushi.jpg": "a sushi roll",
+      "assets/cards/restaurant/restaurant-tacos.jpg": "a taco",
+      "assets/cards/restaurant/restaurant-salad.jpg": "a salad",
+      "assets/cards/restaurant/restaurant-soup.jpg": "a bowl of soup",
+      "assets/cards/restaurant/restaurant-steak.jpg": "a steak",
+      "assets/cards/restaurant/restaurant-fries.jpg": "a portion of fries",
+      "assets/cards/restaurant/restaurant-sandwich.jpg": "a sandwich",
+      "assets/cards/restaurant/restaurant-curry.jpg": "a curry",
+      "assets/cards/restaurant/restaurant-noodles.jpg": "a bowl of noodles",
+      "assets/cards/restaurant/restaurant-dumplings.jpg": "a dumpling",
+      "assets/cards/restaurant/restaurant-pancakes.jpg": "a pancake",
+      "assets/cards/restaurant/restaurant-omelet.jpg": "an omelet",
+      "assets/cards/restaurant/restaurant-falafel.jpg": "a falafel",
+      "assets/cards/restaurant/restaurant-shawarma.jpg": "a shawarma",
+      "assets/cards/restaurant/restaurant-ramen.jpg": "a bowl of ramen",
+      "assets/cards/restaurant/restaurant-burrito.jpg": "a burrito",
+      "assets/cards/restaurant/restaurant-lasagna.jpg": "a lasagna",
+      "assets/cards/restaurant/restaurant-risotto.jpg": "a risotto",
+      "assets/cards/restaurant/restaurant-kebab.jpg": "a kebab",
+      "assets/cards/restaurant/restaurant-fish.jpg": "a fish",
+      "assets/cards/restaurant/restaurant-chicken.jpg": "a chicken dish",
+      "assets/cards/restaurant/restaurant-rice-bowl.jpg": "a rice bowl",
+      "assets/cards/restaurant/restaurant-hot-dog.jpg": "a hot dog",
+      "assets/cards/restaurant/restaurant-nachos.jpg": "a plate of nachos",
+      "assets/cards/restaurant/restaurant-ice-cream.jpg": "an ice cream cone",
+      "assets/cards/restaurant/restaurant-cake.jpg": "a slice of cake",
+      "assets/cards/restaurant/restaurant-coffee.jpg": "a cup of coffee",
+      "assets/cards/home/home-sofa.jpg": "a sofa",
+      "assets/cards/home/home-chair.jpg": "a chair",
+      "assets/cards/home/home-table.jpg": "a table",
+      "assets/cards/home/home-lamp.jpg": "a lamp",
+      "assets/cards/home/home-bed.jpg": "a bed",
+      "assets/cards/home/home-pillow.jpg": "a pillow",
+      "assets/cards/home/home-blanket.jpg": "a blanket",
+      "assets/cards/home/home-mirror.jpg": "a mirror",
+      "assets/cards/home/home-clock.jpg": "a clock",
+      "assets/cards/home/home-keys.jpg": "a key",
+      "assets/cards/home/home-door.jpg": "a door",
+      "assets/cards/home/home-window.jpg": "a window",
+      "assets/cards/home/home-plant.jpg": "a plant",
+      "assets/cards/home/home-books.jpg": "a book",
+      "assets/cards/home/home-phone.jpg": "a phone",
+      "assets/cards/home/home-laptop.jpg": "a laptop",
+      "assets/cards/home/home-remote.jpg": "a remote",
+      "assets/cards/home/home-towel.jpg": "a towel",
+      "assets/cards/home/home-toothbrush.jpg": "a toothbrush",
+      "assets/cards/home/home-soap.jpg": "a bar of soap",
+      "assets/cards/home/home-shampoo.jpg": "a bottle of shampoo",
+      "assets/cards/home/home-shoes.jpg": "a shoe",
+      "assets/cards/home/home-coat.jpg": "a coat",
+      "assets/cards/home/home-bag.jpg": "a bag",
+      "assets/cards/home/home-cup.jpg": "a cup",
+      "assets/cards/home/home-plate.jpg": "a plate",
+      "assets/cards/home/home-fork.jpg": "a fork",
+      "assets/cards/home/home-spoon.jpg": "a spoon",
+      "assets/cards/home/home-fridge.jpg": "a fridge",
+      "assets/cards/home/home-oven.jpg": "an oven"
+    };
+
     const DECKS = {
       groceries: {
         label: "Groceries",
@@ -1514,6 +1577,10 @@
       }
 
       getLabelFromPath(path) {
+        if (CARD_LABELS[path]) {
+          return CARD_LABELS[path];
+        }
+
         const filename = decodeURIComponent(path.split("/").pop() || "");
         const nameWithoutExt = filename.replace(/\.[^.]+$/, "");
         const titleCase = (value) => value
